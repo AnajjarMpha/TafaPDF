@@ -1,0 +1,6 @@
+{
+  "name": "AcrobatPDF Studio - منصة تحرير وتصميم ملفات PDF",
+  "description": "منصة ويب متقدمة شبيهة بـ Adobe Acrobat لإنشاء وتعديل وتنسيق مستندات PDF، إضافة النصوص والصور والأشكال، التوقيع الرقمي، وإدارة الصفحات وتصديرها بدقة عالية.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
