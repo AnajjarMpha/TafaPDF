@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Download, FileText, Image as ImageIcon, Printer, CheckCircle2, AlertCircle, X, Loader2 } from 'lucide-react';
 import { exportDocumentToPDF, exportPageToImage, ExportOptions } from '../utils/pdfExport';
 import { SupportedLanguage, translations } from '../constants/i18n';
+import { PlatformSiteSettings } from '../types/siteSettings';
+import { AdUnit } from './AdUnit';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface ExportModalProps {
   currentPageIndex: number;
   pageContainerRefs: HTMLElement[];
   language?: SupportedLanguage;
+  settings?: PlatformSiteSettings;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -20,7 +23,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   totalPages,
   currentPageIndex,
   pageContainerRefs,
-  language = 'en'
+  language = 'en',
+  settings
 }) => {
   const t = translations[language] || translations.en;
   const [filename, setFilename] = useState(documentTitle || t.defaultBookFilename);
@@ -261,6 +265,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {settings && (
+            <div className="mt-3">
+              <AdUnit slotType="modal-banner" settings={settings} />
             </div>
           )}
         </div>

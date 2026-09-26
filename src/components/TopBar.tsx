@@ -23,7 +23,8 @@ import {
   X,
   BookOpen,
   Layers,
-  Sparkles
+  Sparkles,
+  SlidersHorizontal
 } from 'lucide-react';
 import { SupportedLanguage, SUPPORTED_LANGUAGES, translations } from '../constants/i18n';
 
@@ -44,6 +45,7 @@ interface TopBarProps {
   onOpenUploadModal: () => void;
   onOpenToolsModal: () => void;
   onOpenBookStudioModal?: () => void;
+  onOpenAdminModal?: () => void;
   onSaveProject: () => void;
   onLoadProject: () => void;
   isFullscreen: boolean;
@@ -69,6 +71,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenUploadModal,
   onOpenToolsModal,
   onOpenBookStudioModal,
+  onOpenAdminModal,
   onSaveProject,
   onLoadProject,
   isFullscreen,
@@ -304,6 +307,18 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
+          {/* Admin & SEO Management Console */}
+          {onOpenAdminModal && (
+            <button
+              onClick={onOpenAdminModal}
+              className="p-1.5 sm:p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors shrink-0 flex items-center justify-center"
+              title={t.adminConsoleTitle}
+              aria-label={t.adminConsole}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-700" />
+            </button>
+          )}
+
           {/* Fullscreen Toggle (hidden on small viewports) */}
           <button
             onClick={onToggleFullscreen}
@@ -389,6 +404,19 @@ export const TopBar: React.FC<TopBarProps> = ({
                     <Layers className="w-4 h-4 text-purple-600" />
                     <span>{t.templates}</span>
                   </button>
+
+                  {onOpenAdminModal && (
+                    <button
+                      onClick={() => {
+                        onOpenAdminModal();
+                        setShowMobileMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-neutral-800 hover:bg-neutral-50 rounded-xl transition-colors"
+                    >
+                      <SlidersHorizontal className="w-4 h-4 text-red-600" />
+                      <span>{t.adminConsole}</span>
+                    </button>
+                  )}
 
                   <div className="pt-2 border-t border-neutral-100" />
 

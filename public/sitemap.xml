@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Homepage / PDF Editor -->
+  <url>
+    <loc>https://tafapdf.com/</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://tafapdf.com/?lang=ar" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tafapdf.com/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://tafapdf.com/?lang=es" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://tafapdf.com/?lang=fr" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tafapdf.com/" />
+  </url>
+
+  <!-- Book Studio & Publishing -->
+  <url>
+    <loc>https://tafapdf.com/#book-studio</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://tafapdf.com/#book-studio?lang=ar" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tafapdf.com/#book-studio?lang=en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://tafapdf.com/#book-studio?lang=es" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://tafapdf.com/#book-studio?lang=fr" />
+  </url>
+
+  <!-- PDF Power Tools (Merge, Split, Rotate, Compress) -->
+  <url>
+    <loc>https://tafapdf.com/#tools</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://tafapdf.com/#tools?lang=ar" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tafapdf.com/#tools?lang=en" />
+  </url>
+
+  <!-- Professional Templates Gallery -->
+  <url>
+    <loc>https://tafapdf.com/#templates</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://tafapdf.com/#templates?lang=ar" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tafapdf.com/#templates?lang=en" />
+  </url>
+
+  <!-- Digital Signature Studio -->
+  <url>
+    <loc>https://tafapdf.com/#signature</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- High-Resolution PDF & Print Export -->
+  <url>
+    <loc>https://tafapdf.com/#export</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Privacy Policy -->
+  <url>
+    <loc>https://tafapdf.com/#privacy</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <!-- Terms of Service -->
+  <url>
+    <loc>https://tafapdf.com/#terms</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+</urlset>

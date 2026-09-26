@@ -31,8 +31,13 @@ import { ExportModal } from './components/ExportModal';
 import { PDFUploadModal } from './components/PDFUploadModal';
 import { PDFToolsModal } from './components/PDFToolsModal';
 import { BookStudioModal, PRESET_LOCALIZATIONS } from './components/BookStudioModal';
+import { AdminSettingsModal } from './components/AdminSettingsModal';
+import { AdUnit } from './components/AdUnit';
 import { exportDocumentToPDF } from './utils/pdfExport';
 import { SupportedLanguage, SUPPORTED_LANGUAGES, translations } from './constants/i18n';
+import { PlatformSiteSettings } from './types/siteSettings';
+import { loadSiteSettings, saveSiteSettings } from './utils/siteSettingsStorage';
+import { applySiteSettingsToDOM, trackPlatformEvent } from './utils/scriptInjector';
 
 export default function App() {
   // Language state (English is primary/mother language, then Arabic, Spanish, French)
@@ -103,6 +108,21 @@ export default function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isToolsModalOpen, setIsToolsModalOpen] = useState(false);
   const [isBookStudioModalOpen, setIsBookStudioModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+
+  // Platform Site Settings (AdSense, Analytics, Site Kit & SEO)
+  const [siteSettings, setSiteSettings] = useState<PlatformSiteSettings>(loadSiteSettings);
+
+  // Apply script and meta tags to DOM on mount and settings change
+  useEffect(() => {
+    applySiteSettingsToDOM(siteSettings);
+  }, [siteSettings]);
+
+  const handleSaveSiteSettings = useCallback((newSettings: PlatformSiteSettings) => {
+    setSiteSettings(newSettings);
+    saveSiteSettings(newSettings);
+    applySiteSettingsToDOM(newSettings);
+  }, []);
 
   // Refs for export rendering
   const pageDomRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -1219,6 +1239,7 @@ export default function App() {
         onOpenUploadModal={() => setIsUploadModalOpen(true)}
         onOpenToolsModal={() => setIsToolsModalOpen(true)}
         onOpenBookStudioModal={() => setIsBookStudioModalOpen(true)}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
         onSaveProject={handleSaveProject}
         onLoadProject={handleLoadProject}
         isFullscreen={isFullscreen}
@@ -1226,6 +1247,13 @@ export default function App() {
         language={language}
         onLanguageChange={setLanguage}
       />
+
+      {/* Top Banner Ad Unit (if AdSense is enabled) */}
+      {!isFullscreen && siteSettings.adsense.enabled && (
+        <div className="bg-neutral-50 border-b border-neutral-200 px-4 py-1.5 flex justify-center shrink-0">
+          <AdUnit slotType="top-banner" settings={siteSettings} />
+        </div>
+      )}
 
       {/* Main Editing Tools Ribbon */}
       {!isFullscreen && (
@@ -1432,6 +1460,16 @@ export default function App() {
         totalPages={doc.pages.length}
         currentPageIndex={currentPageIndex}
         pageContainerRefs={pageDomRefs.current.filter(Boolean) as HTMLElement[]}
+        language={language}
+        settings={siteSettings}
+      />
+
+      {/* Platform Administration, Google AdSense, Analytics & SEO Modal */}
+      <AdminSettingsModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        settings={siteSettings}
+        onSaveSettings={handleSaveSiteSettings}
         language={language}
       />
     </div>
