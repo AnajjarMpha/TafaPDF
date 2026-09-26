@@ -216,12 +216,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     }
                     className="w-full bg-white border border-neutral-300 rounded px-2 py-1 text-xs text-neutral-800"
                   >
-                    <option value="Plus Jakarta Sans">Plus Jakarta Sans (Modern Latin)</option>
-                    <option value="Arial">Arial (Standard)</option>
-                    <option value="Cairo">Cairo (كايْرو عصري)</option>
-                    <option value="Amiri">Amiri (أميري كلاسيكي وروايات)</option>
-                    <option value="Tajawal">Tajawal (تجوال مريح للكتب)</option>
-                    <option value="Courier New">Courier New (Typewriter)</option>
+                    <option value="Plus Jakarta Sans">Plus Jakarta Sans {language === 'ar' ? '(لاتيني عصري)' : '(Modern Latin)'}</option>
+                    <option value="Arial">Arial {language === 'ar' ? '(قياسي)' : '(Standard)'}</option>
+                    <option value="Cairo">Cairo {language === 'ar' ? '(كايْرو عصري)' : '(Modern Arabic/Latin)'}</option>
+                    <option value="Amiri">Amiri {language === 'ar' ? '(أميري كلاسيكي وروايات)' : '(Classic Serif / Books)'}</option>
+                    <option value="Tajawal">Tajawal {language === 'ar' ? '(تجوال مريح للكتب)' : '(Clean Book Sans)'}</option>
+                    <option value="Courier New">Courier New {language === 'ar' ? '(آلة كاتبة)' : '(Typewriter / Mono)'}</option>
                   </select>
                 </div>
 

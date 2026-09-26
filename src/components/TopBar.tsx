@@ -109,9 +109,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <header className="relative bg-white border-b border-neutral-200 select-none z-40">
+    <header className="relative bg-white border-b border-neutral-200 select-none z-50">
       {/* Main Bar */}
-      <div className="h-14 px-2 sm:px-4 flex items-center justify-between gap-1 sm:gap-3 max-w-full overflow-hidden">
+      <div className="h-14 px-2 sm:px-4 flex items-center justify-between gap-1 sm:gap-3 max-w-full">
         {/* Zone 1: Brand & Document Info */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
           {/* Logo & Brand Name */}
@@ -258,9 +258,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
             {showLangMenu && (
               <div
-                className={`absolute top-full mt-1.5 ${
-                  language === 'ar' ? 'left-0' : 'right-0'
-                } w-44 bg-white rounded-xl shadow-xl border border-neutral-200 py-1.5 z-50 animate-in fade-in zoom-in-95`}
+                className="absolute top-full mt-2 end-0 w-48 bg-white rounded-xl shadow-2xl border border-neutral-200 py-1.5 z-50 animate-in fade-in zoom-in-95 ring-1 ring-black/5"
               >
                 <div className="px-3 py-1 text-[10px] font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-100">
                   {t.switchLanguage}
@@ -330,9 +328,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             {/* Mobile / Compact Dropdown Panel */}
             {showMobileMenu && (
               <div
-                className={`absolute top-full mt-2 ${
-                  language === 'ar' ? 'left-0' : 'right-0'
-                } w-64 bg-white rounded-2xl shadow-2xl border border-neutral-200 p-2.5 z-50 space-y-2 animate-in fade-in zoom-in-95`}
+                className="absolute top-full mt-2 end-0 w-64 bg-white rounded-2xl shadow-2xl border border-neutral-200 p-2.5 z-50 space-y-2 animate-in fade-in zoom-in-95 ring-1 ring-black/5"
               >
                 <div className="px-2 py-1 text-[11px] font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-100">
                   {t.moreActions}

@@ -374,7 +374,15 @@ export const PageCanvas: React.FC<PageCanvasProps> = ({
         {activeTool === 'text' && (
           <div className="no-export absolute -top-8 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md z-50 whitespace-nowrap flex items-center gap-1.5 pointer-events-none">
             <Type className="w-3.5 h-3.5" />
-            <span>انقر في أي مكان داخل المستند لإضافة أو تعديل النص مباشرة</span>
+            <span>
+              {language === 'ar'
+                ? 'انقر في أي مكان داخل المستند لإضافة أو تعديل النص مباشرة'
+                : language === 'es'
+                ? 'Haga clic en cualquier lugar para agregar o editar texto'
+                : language === 'fr'
+                ? 'Cliquez n’importe où pour ajouter ou modifier du texte'
+                : 'Click anywhere inside document to add or edit text'}
+            </span>
           </div>
         )}
 
@@ -393,7 +401,7 @@ export const PageCanvas: React.FC<PageCanvasProps> = ({
           {page.backgroundImage && (
             <img
               src={page.backgroundImage}
-              alt={`مستند PDF صفحة ${pageIndex + 1}`}
+              alt={language === 'ar' ? `مستند PDF صفحة ${pageIndex + 1}` : `PDF Document page ${pageIndex + 1}`}
               draggable={false}
               className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none z-0"
             />
@@ -530,7 +538,7 @@ export const PageCanvas: React.FC<PageCanvasProps> = ({
                       style={{
                         backgroundColor: element.fillColor || '#ffffff'
                       }}
-                      title="مربع تبييض وحجب النص السابق"
+                      title={language === 'ar' ? 'مربع تبييض وحجب النص السابق' : 'Whiteout / Redaction box'}
                     />
                   )}
 
@@ -552,14 +560,14 @@ export const PageCanvas: React.FC<PageCanvasProps> = ({
                           onBlur={() => setEditingTextId(null)}
                           style={{
                             fontSize: `${element.fontSize}px`,
-                            fontFamily: element.fontFamily || 'Cairo',
+                            fontFamily: element.fontFamily || (language === 'ar' ? 'Cairo' : 'Plus Jakarta Sans'),
                             fontWeight: element.fontWeight || 'normal',
                             color: element.color || '#0f172a',
-                            textAlign: element.textAlign || 'right',
+                            textAlign: element.textAlign || (language === 'ar' ? 'right' : 'left'),
                             lineHeight: element.lineHeight || 1.6,
                             letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
                             textIndent: element.paragraphIndent ? `${element.paragraphIndent}px` : undefined,
-                            direction: 'rtl'
+                            direction: (element.textAlign === 'left' || (element.textAlign !== 'right' && language !== 'ar')) ? 'ltr' : 'rtl'
                           }}
                           className="w-full h-full bg-white text-neutral-900 resize-none border border-blue-400 rounded outline-hidden p-1 shadow-xs"
                         />
@@ -567,22 +575,22 @@ export const PageCanvas: React.FC<PageCanvasProps> = ({
                         <div
                           style={{
                             fontSize: `${element.fontSize}px`,
-                            fontFamily: element.fontFamily || 'Cairo',
+                            fontFamily: element.fontFamily || (language === 'ar' ? 'Cairo' : 'Plus Jakarta Sans'),
                             fontWeight: element.fontWeight || 'normal',
                             fontStyle: element.fontStyle || 'normal',
                             textDecoration: element.textDecoration || 'none',
                             color: element.color || '#0f172a',
-                            textAlign: element.textAlign || 'right',
+                            textAlign: element.textAlign || (language === 'ar' ? 'right' : 'left'),
                             lineHeight: element.lineHeight || 1.6,
                             letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
                             textIndent: element.paragraphIndent ? `${element.paragraphIndent}px` : undefined,
-                            direction: 'rtl',
+                            direction: (element.textAlign === 'left' || (element.textAlign !== 'right' && language !== 'ar')) ? 'ltr' : 'rtl',
                             whiteSpace: 'pre-wrap'
                           }}
                           className="w-full h-full select-text break-words cursor-text hover:outline-dashed hover:outline-1 hover:outline-blue-400"
-                          title="انقر مرتين لتعديل النص مباشرة"
+                          title={language === 'ar' ? 'انقر مرتين لتعديل النص مباشرة' : 'Double click to edit text'}
                         >
-                          {element.text || 'نص فارغ'}
+                          {element.text || (language === 'ar' ? 'نص فارغ' : 'Empty text')}
                         </div>
                       )}
                     </div>
@@ -592,7 +600,7 @@ export const PageCanvas: React.FC<PageCanvasProps> = ({
                   {element.type === 'image' && (
                     <img
                       src={element.src}
-                      alt="عنصر صورة"
+                      alt={language === 'ar' ? 'عنصر صورة' : 'Image element'}
                       draggable={false}
                       className="w-full h-full select-none"
                       style={{
@@ -646,7 +654,7 @@ export const PageCanvas: React.FC<PageCanvasProps> = ({
                     <div className="w-full h-full flex flex-col items-center justify-center p-1 border-b border-dashed border-neutral-300">
                       <img
                         src={element.signatureDataUrl}
-                        alt="توقيع معتمد"
+                        alt={language === 'ar' ? 'توقيع معتمد' : 'Verified signature'}
                         draggable={false}
                         className="max-h-full max-w-full object-contain pointer-events-none"
                       />
@@ -789,7 +797,12 @@ export const PageCanvas: React.FC<PageCanvasProps> = ({
 
       {/* Page Number Label */}
       <div className="mt-3 text-xs font-mono text-neutral-500 font-medium">
-        صفحة {pageIndex + 1} {page.rotation ? `(${page.rotation}°)` : ''}
+        {language === 'ar'
+          ? `صفحة ${pageIndex + 1}`
+          : language === 'es'
+          ? `Página ${pageIndex + 1}`
+          : `Page ${pageIndex + 1}`}
+        {page.rotation ? ` (${page.rotation}°)` : ''}
       </div>
     </div>
   );

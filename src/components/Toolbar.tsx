@@ -49,13 +49,13 @@ interface ToolbarProps {
   language?: SupportedLanguage;
 }
 
-const FONTS = [
-  { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans (Modern Latin)' },
-  { id: 'Arial', name: 'Arial (Standard)' },
-  { id: 'Cairo', name: 'Cairo (عصري متناسق)' },
-  { id: 'Amiri', name: 'Amiri (أميري كلاسيكي وروايات)' },
-  { id: 'Tajawal', name: 'Tajawal (تجوال مريح للكتب)' },
-  { id: 'Courier New', name: 'Courier New (Typewriter)' }
+const getFonts = (lang: SupportedLanguage) => [
+  { id: 'Plus Jakarta Sans', name: lang === 'ar' ? 'Plus Jakarta Sans (لاتيني عصري)' : 'Plus Jakarta Sans (Modern Latin)' },
+  { id: 'Arial', name: lang === 'ar' ? 'Arial (قياسي)' : 'Arial (Standard)' },
+  { id: 'Cairo', name: lang === 'ar' ? 'Cairo (عصري متناسق)' : 'Cairo (Modern Arabic/Latin)' },
+  { id: 'Amiri', name: lang === 'ar' ? 'Amiri (أميري كلاسيكي وروايات)' : 'Amiri (Classic Serif / Books)' },
+  { id: 'Tajawal', name: lang === 'ar' ? 'Tajawal (تجوال مريح للكتب)' : 'Tajawal (Clean Book Sans)' },
+  { id: 'Courier New', name: lang === 'ar' ? 'Courier New (آلة كاتبة)' : 'Courier New (Typewriter / Mono)' }
 ];
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -366,11 +366,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           {/* Font Family */}
           <select
-            value={textEl.fontFamily || 'Cairo'}
+            value={textEl.fontFamily || (language === 'ar' ? 'Cairo' : 'Plus Jakarta Sans')}
             onChange={(e) => onUpdateElement(textEl.id, { fontFamily: e.target.value })}
             className="bg-white border border-neutral-300 rounded px-2 py-1 text-xs text-neutral-800 focus:outline-hidden"
           >
-            {FONTS.map((f) => (
+            {getFonts(language).map((f) => (
               <option key={f.id} value={f.id}>
                 {f.name}
               </option>
