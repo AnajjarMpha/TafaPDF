@@ -7,6 +7,7 @@ export interface ExportOptions {
   quality?: 'standard' | 'high' | 'ultra';
   pageRange?: 'all' | 'current';
   currentPageIndex?: number;
+  language?: 'en' | 'ar' | 'es' | 'fr';
   onProgress?: (progress: number, status: string) => void;
 }
 
@@ -156,11 +157,20 @@ export async function exportDocumentToPDF(
     quality = 'high',
     pageRange = 'all',
     currentPageIndex = 0,
+    language = 'en',
     onProgress
   } = options;
 
   if (!pageElements.length) {
-    throw new Error('لا توجد صفحات متاحة للتصدير');
+    throw new Error(
+      language === 'ar'
+        ? 'لا توجد صفحات متاحة للتصدير'
+        : language === 'es'
+        ? 'No hay páginas disponibles para exportar'
+        : language === 'fr'
+        ? 'Aucune page disponible pour l’exportation'
+        : 'No pages available to export'
+    );
   }
 
   const pagesToExport = pageRange === 'current'
@@ -172,7 +182,16 @@ export async function exportDocumentToPDF(
   // Scale factor: standard (1.5x), high (2x), ultra (2.5x)
   const scale = quality === 'ultra' ? 2.5 : quality === 'high' ? 2.0 : 1.5;
 
-  onProgress?.(5, 'جاري تهيئة محرك PDF وتجهيز الخطوط...');
+  const msgInit =
+    language === 'ar'
+      ? 'جاري تهيئة محرك PDF وتجهيز الخطوط...'
+      : language === 'es'
+      ? 'Inicializando motor PDF y fuentes...'
+      : language === 'fr'
+      ? 'Initialisation du moteur PDF et des polices...'
+      : 'Initializing PDF engine and preparing fonts...';
+
+  onProgress?.(5, msgInit);
 
   // Initialize jsPDF with standard A4 in pt (595.28 x 841.89 pt)
   const pdf = new jsPDF({
@@ -190,7 +209,16 @@ export async function exportDocumentToPDF(
     const pageNum = i + 1;
 
     const progressPercent = Math.round(10 + (pageNum / totalPages) * 80);
-    onProgress?.(progressPercent, `معالجة وتصيير الصفحة ${pageNum} من ${totalPages}...`);
+    const msgPage =
+      language === 'ar'
+        ? `معالجة وتصيير الصفحة ${pageNum} من ${totalPages}...`
+        : language === 'es'
+        ? `Procesando y renderizando página ${pageNum} de ${totalPages}...`
+        : language === 'fr'
+        ? `Rendu de la page ${pageNum} sur ${totalPages}...`
+        : `Rendering and processing page ${pageNum} of ${totalPages}...`;
+
+    onProgress?.(progressPercent, msgPage);
 
     const imgData = await renderPageToImageData(pageEl, scale);
 
@@ -201,13 +229,31 @@ export async function exportDocumentToPDF(
     pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
   }
 
-  onProgress?.(95, 'جاري تجميع وحفظ ملف PDF...');
+  const msgSave =
+    language === 'ar'
+      ? 'جاري تجميع وحفظ ملف PDF...'
+      : language === 'es'
+      ? 'Generando y guardando archivo PDF...'
+      : language === 'fr'
+      ? 'Assemblage et enregistrement du fichier PDF...'
+      : 'Assembling and saving PDF file...';
+
+  onProgress?.(95, msgSave);
   await new Promise((r) => setTimeout(r, 200));
 
   const cleanFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
   pdf.save(cleanFilename);
 
-  onProgress?.(100, 'تم التصدير بنجاح!');
+  const msgDone =
+    language === 'ar'
+      ? 'تم التصدير بنجاح!'
+      : language === 'es'
+      ? '¡Exportación completada con éxito!'
+      : language === 'fr'
+      ? 'Exportation terminée avec succès !'
+      : 'Export completed successfully!';
+
+  onProgress?.(100, msgDone);
 }
 
 export async function exportPageToImage(pageEl: HTMLElement, filename = 'page.png'): Promise<void> {

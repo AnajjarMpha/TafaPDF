@@ -27,14 +27,24 @@ interface RawTextItem {
  */
 export async function loadPDFFile(
   file: File,
-  onProgress?: (progress: PDFLoadProgress) => void
+  onProgress?: (progress: PDFLoadProgress) => void,
+  language: 'en' | 'ar' | 'es' | 'fr' = 'en'
 ): Promise<PDFDocument> {
   const arrayBuffer = await file.arrayBuffer();
+
+  const msgInit =
+    language === 'ar'
+      ? 'جاري فك تشفير وتجهيز ملف الـ PDF واستخراج النصوص...'
+      : language === 'es'
+      ? 'Decodificando archivo PDF y extrayendo textos...'
+      : language === 'fr'
+      ? 'Décodage du fichier PDF et extraction des textes...'
+      : 'Decoding PDF file and extracting text elements...';
 
   onProgress?.({
     currentPage: 0,
     totalPages: 1,
-    status: 'جاري فك تشفير وتجهيز ملف الـ PDF واستخراج النصوص...'
+    status: msgInit
   });
 
   const loadingTask = pdfjsLib.getDocument({
@@ -48,10 +58,19 @@ export async function loadPDFFile(
   const pages: PDFPage[] = [];
 
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+    const msgPage =
+      language === 'ar'
+        ? `معالجة واستخراج نصوص الصفحة ${pageNum} من ${numPages}...`
+        : language === 'es'
+        ? `Procesando y extrayendo textos de la página ${pageNum} de ${numPages}...`
+        : language === 'fr'
+        ? `Traitement et extraction des textes de la page ${pageNum} sur ${numPages}...`
+        : `Processing and extracting text from page ${pageNum} of ${numPages}...`;
+
     onProgress?.({
       currentPage: pageNum,
       totalPages: numPages,
-      status: `معالجة واستخراج نصوص الصفحة ${pageNum} من ${numPages}...`
+      status: msgPage
     });
 
     const page = await pdfDoc.getPage(pageNum);
@@ -179,10 +198,19 @@ export async function loadPDFFile(
     });
   }
 
+  const msgSuccess =
+    language === 'ar'
+      ? 'تم استخراج النصوص وتحويل المستند لوضع التحرير الكامل بنجاح!'
+      : language === 'es'
+      ? '¡Textos extraídos y documento convertido a modo de edición completa con éxito!'
+      : language === 'fr'
+      ? 'Textes extraits et document converti en mode édition avec succès !'
+      : 'Text and vector elements extracted successfully!';
+
   onProgress?.({
     currentPage: numPages,
     totalPages: numPages,
-    status: 'تم استخراج النصوص وتحويل المستند لوضع التحرير الكامل بنجاح!'
+    status: msgSuccess
   });
 
   const cleanTitle = file.name.endsWith('.pdf') ? file.name : `${file.name}.pdf`;
@@ -190,7 +218,7 @@ export async function loadPDFFile(
   return {
     id: `doc-${Date.now()}`,
     title: cleanTitle,
-    author: 'المستخدم',
+    author: language === 'ar' ? 'المستخدم' : 'User',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     pageSize: 'A4',
@@ -203,7 +231,7 @@ export async function loadPDFFile(
     },
     bookSettings: {
       bookTitle: cleanTitle.replace('.pdf', ''),
-      authorName: 'المؤلف',
+      authorName: language === 'ar' ? 'المؤلف' : 'Author',
       headerEnabled: false,
       headerText: '',
       footerEnabled: true,

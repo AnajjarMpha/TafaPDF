@@ -87,18 +87,23 @@ export const TopBar: React.FC<TopBarProps> = ({
   const t = translations[language] || translations.en;
   const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
 
-  // Close menus when clicking outside
+  // Close menus when clicking outside (mouse and touch events)
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (langMenuRef.current && !langMenuRef.current.contains(target)) {
         setShowLangMenu(false);
       }
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(target)) {
         setShowMobileMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const handleTitleSubmit = () => {
@@ -109,9 +114,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <header className="relative bg-white border-b border-neutral-200 select-none z-50">
-      {/* Main Bar */}
-      <div className="h-14 px-2 sm:px-4 flex items-center justify-between gap-1 sm:gap-3 max-w-full">
+    <header className="relative bg-white border-b border-neutral-200 select-none z-50 overflow-visible">
+      {/* Main Bar - Responsive wrap, no clipping */}
+      <div className="min-h-14 px-2 sm:px-4 py-1.5 flex flex-wrap items-center justify-between gap-1.5 sm:gap-3 max-w-full overflow-visible">
         {/* Zone 1: Brand & Document Info */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
           {/* Logo & Brand Name */}
@@ -247,18 +252,21 @@ export const TopBar: React.FC<TopBarProps> = ({
           {/* Language Selector Dropdown */}
           <div className="relative" ref={langMenuRef}>
             <button
-              onClick={() => setShowLangMenu(!showLangMenu)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 text-xs font-semibold text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors shadow-2xs shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLangMenu(!showLangMenu);
+              }}
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 text-xs font-semibold text-neutral-800 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors shadow-2xs shrink-0 cursor-pointer"
               title={t.switchLanguage}
             >
               <span className="text-sm">{currentLangObj.flag}</span>
-              <span className="hidden md:inline font-sans font-medium">{currentLangObj.name}</span>
-              <ChevronDown className="w-3 h-3 text-neutral-400" />
+              <span className="hidden sm:inline font-sans font-medium">{currentLangObj.name}</span>
+              <ChevronDown className={`w-3 h-3 text-neutral-400 transition-transform ${showLangMenu ? 'rotate-180' : ''}`} />
             </button>
 
             {showLangMenu && (
               <div
-                className="absolute top-full mt-2 end-0 w-48 bg-white rounded-xl shadow-2xl border border-neutral-200 py-1.5 z-50 animate-in fade-in zoom-in-95 ring-1 ring-black/5"
+                className="absolute top-full mt-2 end-0 rtl:start-0 rtl:end-auto w-48 sm:w-52 bg-white rounded-xl shadow-2xl border border-neutral-200 py-1.5 z-[100] animate-in fade-in zoom-in-95 ring-1 ring-black/10"
               >
                 <div className="px-3 py-1 text-[10px] font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-100">
                   {t.switchLanguage}
@@ -270,7 +278,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                       onLanguageChange(lang.code);
                       setShowLangMenu(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors cursor-pointer ${
                       language === lang.code
                         ? 'bg-red-50 text-red-700 font-bold'
                         : 'text-neutral-700 hover:bg-neutral-50'

@@ -65,6 +65,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         quality,
         pageRange,
         currentPageIndex,
+        language,
         onProgress: (prog, msg) => {
           setProgress(prog);
           setStatusMessage(msg);

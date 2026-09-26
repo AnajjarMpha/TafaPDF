@@ -227,7 +227,13 @@ export const SignatureModal: React.FC<SignatureModalProps> = ({
                 />
                 {!hasDrawn && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-neutral-400 text-xs">
-                    {language === 'ar' ? 'وقع هنا بالماوس أو شاشة اللمس' : 'Sign here using your mouse or touchscreen'}
+                    {language === 'ar'
+                      ? 'وقع هنا بالماوس أو شاشة اللمس'
+                      : language === 'es'
+                      ? 'Firme aquí usando el ratón o pantalla táctil'
+                      : language === 'fr'
+                      ? 'Signez ici avec votre souris ou écran tactile'
+                      : 'Sign here using your mouse or touchscreen'}
                   </div>
                 )}
                 {hasDrawn && (
@@ -290,7 +296,13 @@ export const SignatureModal: React.FC<SignatureModalProps> = ({
               {/* Preview in various calligraphy fonts */}
               <div className="space-y-2">
                 <span className="text-xs text-neutral-500 block">
-                  {language === 'ar' ? 'اختر نمط الخط:' : 'Select typography style:'}
+                  {language === 'ar'
+                    ? 'اختر نمط الخط:'
+                    : language === 'es'
+                    ? 'Seleccione estilo tipográfico:'
+                    : language === 'fr'
+                    ? 'Choisissez le style typographique :'
+                    : 'Select typography style:'}
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {CALLIGRAPHY_FONTS.map((fontItem) => (

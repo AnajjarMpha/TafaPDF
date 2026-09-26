@@ -30,7 +30,7 @@ import { TemplatePickerModal } from './components/TemplatePickerModal';
 import { ExportModal } from './components/ExportModal';
 import { PDFUploadModal } from './components/PDFUploadModal';
 import { PDFToolsModal } from './components/PDFToolsModal';
-import { BookStudioModal } from './components/BookStudioModal';
+import { BookStudioModal, PRESET_LOCALIZATIONS } from './components/BookStudioModal';
 import { exportDocumentToPDF } from './utils/pdfExport';
 import { SupportedLanguage, SUPPORTED_LANGUAGES, translations } from './constants/i18n';
 
@@ -344,13 +344,235 @@ export default function App() {
 
   // Apply Full Book Structure Preset
   const handleApplyBookPreset = useCallback((preset: BookStructureTemplate) => {
-    const clonedPages = JSON.parse(JSON.stringify(preset.pages));
+    const loc = PRESET_LOCALIZATIONS[preset.id]?.[language];
+    const localizedTitle = loc ? loc.name : preset.name;
+    const isAr = language === 'ar';
+
+    let clonedPages: PDFPage[] = JSON.parse(JSON.stringify(preset.pages));
+
+    if (!isAr && preset.id === 'novel_classic') {
+      clonedPages = [
+        // 1. Cover
+        {
+          ...clonedPages[0],
+          elements: [
+            clonedPages[0].elements[0], // border
+            {
+              id: `b-el-genre-${Date.now()}`,
+              type: 'text',
+              x: 100,
+              y: 160,
+              width: 594,
+              height: 30,
+              zIndex: 2,
+              text: 'A NOVEL',
+              fontSize: 16,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: '600',
+              color: '#fbbf24',
+              textAlign: 'center',
+              lineHeight: 1.5
+            },
+            {
+              id: `b-el-title-${Date.now()}`,
+              type: 'text',
+              x: 70,
+              y: 340,
+              width: 654,
+              height: 90,
+              zIndex: 2,
+              text: 'ECHOES OF THE DESERT',
+              fontSize: 38,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'bold',
+              color: '#ffffff',
+              textAlign: 'center',
+              lineHeight: 1.4
+            },
+            {
+              id: `b-el-sub-${Date.now()}`,
+              type: 'text',
+              x: 70,
+              y: 440,
+              width: 654,
+              height: 40,
+              zIndex: 2,
+              text: 'A Journey of Origins and Destiny Across the Sands',
+              fontSize: 17,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'normal',
+              color: '#cbd5e1',
+              textAlign: 'center'
+            },
+            {
+              id: `b-el-author-${Date.now()}`,
+              type: 'text',
+              x: 70,
+              y: 780,
+              width: 654,
+              height: 40,
+              zIndex: 2,
+              text: 'By: Dr. Edward Sterling',
+              fontSize: 22,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: '600',
+              color: '#f59e0b',
+              textAlign: 'center'
+            },
+            {
+              id: `b-el-publisher-${Date.now()}`,
+              type: 'text',
+              x: 70,
+              y: 840,
+              width: 654,
+              height: 30,
+              zIndex: 2,
+              text: 'Modern Literary Press • First Edition 2026',
+              fontSize: 13,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'normal',
+              color: '#94a3b8',
+              textAlign: 'center'
+            }
+          ]
+        },
+        // 2. Dedication
+        {
+          ...clonedPages[1],
+          elements: [
+            {
+              id: `b-el-ded-title-${Date.now()}`,
+              type: 'text',
+              x: 70,
+              y: 280,
+              width: 654,
+              height: 60,
+              zIndex: 2,
+              text: 'DEDICATION',
+              fontSize: 26,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'bold',
+              color: '#1e293b',
+              textAlign: 'center'
+            },
+            {
+              id: `b-el-ded-body-${Date.now()}`,
+              type: 'text',
+              x: 120,
+              y: 380,
+              width: 554,
+              height: 250,
+              zIndex: 2,
+              text: 'To those who search for their true calling amidst the noise,\nand to everyone writing their own history with courage and perseverance.\n\nThis work is dedicated to you.',
+              fontSize: 16,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'normal',
+              color: '#475569',
+              textAlign: 'center',
+              lineHeight: 2.0
+            }
+          ]
+        },
+        // 3. Table of Contents
+        {
+          ...clonedPages[2],
+          elements: [
+            {
+              id: `b-el-toc-h-${Date.now()}`,
+              type: 'text',
+              x: 70,
+              y: 90,
+              width: 654,
+              height: 50,
+              zIndex: 2,
+              text: 'Table of Contents',
+              fontSize: 28,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'bold',
+              color: '#1e293b',
+              textAlign: 'center'
+            },
+            clonedPages[2].elements[1], // line
+            {
+              id: `b-el-toc-items-${Date.now()}`,
+              type: 'text',
+              x: 90,
+              y: 190,
+              width: 614,
+              height: 400,
+              zIndex: 2,
+              text: 'Preface & Author Notes ................................................................ Page 3\n\nChapter I: The First Horizon and Desert Whispers ...................... Page 5\n\nChapter II: The Journey Eastward ............................................... Page 18\n\nChapter III: A Flash in the Midnight Abyss ................................. Page 34\n\nEpilogue: Return to the Canyon ................................................. Page 52',
+              fontSize: 15,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'normal',
+              color: '#334155',
+              textAlign: 'left',
+              lineHeight: 2.2
+            }
+          ]
+        },
+        // 4. Chapter Start
+        {
+          ...clonedPages[3],
+          elements: [
+            {
+              id: `b-el-ch1-badge-${Date.now()}`,
+              type: 'text',
+              x: 70,
+              y: 120,
+              width: 654,
+              height: 30,
+              zIndex: 2,
+              text: 'CHAPTER I',
+              fontSize: 14,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'bold',
+              color: '#d97706',
+              textAlign: 'center'
+            },
+            {
+              id: `b-el-ch1-title-${Date.now()}`,
+              type: 'text',
+              x: 70,
+              y: 160,
+              width: 654,
+              height: 50,
+              zIndex: 2,
+              text: 'The First Horizon and Desert Whispers',
+              fontSize: 26,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'bold',
+              color: '#0f172a',
+              textAlign: 'center'
+            },
+            clonedPages[3].elements[2], // line
+            {
+              id: `b-el-ch1-body-${Date.now()}`,
+              type: 'text',
+              x: 80,
+              y: 280,
+              width: 634,
+              height: 500,
+              zIndex: 2,
+              text: 'The sun was sinking toward the distant dunes when the caravan halted at the edge of the ancient canyon. An immense silence enveloped the landscape, interrupted only by the rustle of the dry desert wind and the faint sound of shifting sand.\n\nLord Sterling dismounted from his camel, touching the worn leather map case that had been preserved in his family for three generations. The faded markings revealed coordinates no standard atlas had ever charted.',
+              fontSize: 15,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'normal',
+              color: '#334155',
+              textAlign: 'left',
+              lineHeight: 1.9
+            }
+          ]
+        }
+      ];
+    }
+
     updateDoc((prev) => ({
       ...prev,
-      title: `${preset.name}.pdf`,
+      title: `${localizedTitle}.pdf`,
       bookSettings: {
         ...(prev.bookSettings || {}),
-        bookTitle: preset.name,
+        bookTitle: localizedTitle,
         headerEnabled: true,
         pageNumberingEnabled: true
       },
@@ -358,7 +580,7 @@ export default function App() {
     }));
     setCurrentPageIndex(0);
     setSelectedElementId(null);
-  }, [updateDoc]);
+  }, [language, updateDoc]);
 
   // Insert a Specialized Book Page
   const handleInsertBookPage = useCallback((type: BookPageType, chapterTitle?: string) => {
@@ -767,15 +989,80 @@ export default function App() {
 
   // Apply Template
   const handleSelectTemplate = useCallback((template: TemplateItem) => {
-    const clonedPages = JSON.parse(JSON.stringify(template.pages));
+    let clonedPages: PDFPage[];
+
+    if (template.id === 'tax-invoice' && language !== 'ar') {
+      clonedPages = JSON.parse(JSON.stringify(ENGLISH_INVOICE_TEMPLATE));
+    } else if (template.id === 'blank' && language !== 'ar') {
+      clonedPages = [
+        {
+          id: `p-${Date.now()}`,
+          pageNumber: 1,
+          width: 794,
+          height: 1123,
+          orientation: 'portrait',
+          backgroundColor: '#ffffff',
+          elements: [
+            {
+              id: `txt-blank-title-${Date.now()}`,
+              type: 'text',
+              x: 60,
+              y: 70,
+              width: 674,
+              height: 48,
+              zIndex: 1,
+              text: 'Document Title',
+              fontSize: 28,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'bold',
+              color: '#0f172a',
+              textAlign: 'left',
+              lineHeight: 1.4
+            },
+            {
+              id: `line-blank-div-${Date.now()}`,
+              type: 'line',
+              x: 60,
+              y: 125,
+              width: 674,
+              height: 2,
+              zIndex: 2,
+              strokeColor: '#e2e8f0',
+              strokeWidth: 2,
+              borderStyle: 'solid'
+            },
+            {
+              id: `txt-blank-body-${Date.now()}`,
+              type: 'text',
+              x: 60,
+              y: 150,
+              width: 674,
+              height: 120,
+              zIndex: 3,
+              text: 'Double-click here to start typing your content. You can add extra text boxes, images, digital signatures, and shapes from the top toolbar.',
+              fontSize: 16,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: 'normal',
+              color: '#475569',
+              textAlign: 'left',
+              lineHeight: 1.6
+            }
+          ]
+        }
+      ];
+    } else {
+      clonedPages = JSON.parse(JSON.stringify(template.pages));
+    }
+
+    const title = language === 'ar' ? template.name : template.nameEn;
     updateDoc((prev) => ({
       ...prev,
-      title: `${template.name}.pdf`,
+      title: `${title}.pdf`,
       pages: clonedPages
     }));
     setCurrentPageIndex(0);
     setSelectedElementId(null);
-  }, [updateDoc]);
+  }, [language, updateDoc]);
 
   // Imported PDF File Handler
   const handleImportPDF = useCallback((importedDoc: PDFDocument) => {
@@ -913,7 +1200,7 @@ export default function App() {
   }, [handleUndo, handleRedo, selectedElementId, handleDeleteElement, handleDuplicateElement]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-neutral-100 text-neutral-900 select-none">
+    <div dir={language === 'ar' ? 'rtl' : 'ltr'} className="flex flex-col h-screen w-screen overflow-hidden bg-neutral-100 text-neutral-900 select-none">
       {/* Acrobat Top Bar */}
       <TopBar
         documentTitle={doc.title}
@@ -958,6 +1245,7 @@ export default function App() {
           onOpenToolsModal={() => setIsToolsModalOpen(true)}
           onOpenBookStudioModal={() => setIsBookStudioModalOpen(true)}
           language={language}
+          onLanguageChange={setLanguage}
         />
       )}
 

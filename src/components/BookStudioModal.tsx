@@ -27,7 +27,7 @@ interface BookStudioModalProps {
   language?: SupportedLanguage;
 }
 
-const PRESET_LOCALIZATIONS: Record<
+export const PRESET_LOCALIZATIONS: Record<
   string,
   Record<SupportedLanguage, { name: string; category: string; description: string; badge: string }>
 > = {

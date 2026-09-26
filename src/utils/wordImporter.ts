@@ -11,7 +11,8 @@ export interface DocumentImportProgress {
  */
 function createPagesFromParagraphs(
   paragraphs: { text: string; isHeading?: boolean }[],
-  docTitle: string
+  docTitle: string,
+  language: 'en' | 'ar' | 'es' | 'fr' = 'en'
 ): PDFDocument {
   const pages: PDFPage[] = [];
   const targetWidth = 794;
@@ -99,7 +100,7 @@ function createPagesFromParagraphs(
   return {
     id: `doc-${Date.now()}`,
     title: docTitle.endsWith('.pdf') ? docTitle : `${docTitle}.pdf`,
-    author: 'المستخدم',
+    author: language === 'ar' ? 'المستخدم' : 'User',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     pageSize: 'A4',
@@ -112,7 +113,7 @@ function createPagesFromParagraphs(
     },
     bookSettings: {
       bookTitle: docTitle.replace('.pdf', ''),
-      authorName: 'المؤلف',
+      authorName: language === 'ar' ? 'المؤلف' : 'Author',
       headerEnabled: false,
       headerText: '',
       footerEnabled: true,
@@ -130,20 +131,39 @@ function createPagesFromParagraphs(
  */
 export async function loadWordOrTextFile(
   file: File,
-  onProgress?: (progress: DocumentImportProgress) => void
+  onProgress?: (progress: DocumentImportProgress) => void,
+  language: 'en' | 'ar' | 'es' | 'fr' = 'en'
 ): Promise<PDFDocument> {
   const fileName = file.name.toLowerCase();
 
+  const msgReading =
+    language === 'ar'
+      ? `جاري قراءة واستخراج محتوى ${file.name}...`
+      : language === 'es'
+      ? `Leyendo y extrayendo contenido de ${file.name}...`
+      : language === 'fr'
+      ? `Lecture et extraction du contenu de ${file.name}...`
+      : `Reading and extracting content from ${file.name}...`;
+
   onProgress?.({
-    status: `جاري قراءة واستخراج محتوى ${file.name}...`,
+    status: msgReading,
     percent: 30
   });
 
   // Handle Plain Text (.txt)
   if (fileName.endsWith('.txt')) {
     const rawText = await file.text();
+    const msgTxtFormat =
+      language === 'ar'
+        ? 'تنسيق الفقرات وتوزيع الصفحات بصيغة PDF...'
+        : language === 'es'
+        ? 'Formateando párrafos y páginas PDF...'
+        : language === 'fr'
+        ? 'Mise en page des paragraphes en pages PDF...'
+        : 'Formatting paragraphs into PDF pages...';
+
     onProgress?.({
-      status: 'تنسيق الفقرات وتوزيع الصفحات بصيغة PDF...',
+      status: msgTxtFormat,
       percent: 70
     });
 
@@ -153,28 +173,55 @@ export async function loadWordOrTextFile(
       isHeading: idx === 0 && line.length < 80
     }));
 
+    const msgTxtDone =
+      language === 'ar'
+        ? 'اكتمل التحويل والتنسيق بنجاح!'
+        : language === 'es'
+        ? '¡Conversión completada con éxito!'
+        : language === 'fr'
+        ? 'Conversion terminée avec succès !'
+        : 'Conversion completed successfully!';
+
     onProgress?.({
-      status: 'اكتمل التحويل والتنسيق بنجاح!',
+      status: msgTxtDone,
       percent: 100
     });
 
-    return createPagesFromParagraphs(paragraphs, file.name.replace(/\.txt$/i, ''));
+    return createPagesFromParagraphs(paragraphs, file.name.replace(/\.txt$/i, ''), language);
   }
 
   // Handle Microsoft Word (.docx)
   if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
     const arrayBuffer = await file.arrayBuffer();
 
+    const msgWordDecrypt =
+      language === 'ar'
+        ? 'جاري فك تشفير مستند Word واستخراج النصوص والتنسيقات...'
+        : language === 'es'
+        ? 'Decodificando documento Word y extrayendo estilos...'
+        : language === 'fr'
+        ? 'Décodage du document Word et extraction des styles...'
+        : 'Decoding Word document and extracting typography...';
+
     onProgress?.({
-      status: 'جاري فك تشفير مستند Word واستخراج النصوص والتنسيقات...',
+      status: msgWordDecrypt,
       percent: 50
     });
 
     const result = await mammoth.extractRawText({ arrayBuffer });
     const rawText = result.value || '';
 
+    const msgWordStructure =
+      language === 'ar'
+        ? 'تقسيم المحتوى وهيكلة صفحات المستند القياسية...'
+        : language === 'es'
+        ? 'Estructurando páginas estándar del documento...'
+        : language === 'fr'
+        ? 'Structuration du document en pages standard...'
+        : 'Structuring content into standard document pages...';
+
     onProgress?.({
-      status: 'تقسيم المحتوى وهيكلة صفحات المستند القياسية...',
+      status: msgWordStructure,
       percent: 80
     });
 
@@ -188,13 +235,30 @@ export async function loadWordOrTextFile(
       isHeading: idx === 0 || (p.length < 70 && !p.includes('.'))
     }));
 
+    const msgWordDone =
+      language === 'ar'
+        ? 'تم تحويل مستند Word إلى PDF بنجاح!'
+        : language === 'es'
+        ? '¡Documento Word convertido a PDF con éxito!'
+        : language === 'fr'
+        ? 'Document Word converti en PDF avec succès !'
+        : 'Word document converted to PDF successfully!';
+
     onProgress?.({
-      status: 'تم تحويل مستند Word إلى PDF بنجاح!',
+      status: msgWordDone,
       percent: 100
     });
 
-    return createPagesFromParagraphs(paragraphs, file.name.replace(/\.docx?$/i, ''));
+    return createPagesFromParagraphs(paragraphs, file.name.replace(/\.docx?$/i, ''), language);
   }
 
-  throw new Error('نوع الملف غير مدعوم. يرجى اختيار ملف Word (.docx, .doc) أو نص (.txt).');
+  throw new Error(
+    language === 'ar'
+      ? 'نوع الملف غير مدعوم. يرجى اختيار ملف Word (.docx, .doc) أو نص (.txt).'
+      : language === 'es'
+      ? 'Tipo de archivo no compatible. Seleccione Word (.docx, .doc) o texto (.txt).'
+      : language === 'fr'
+      ? 'Type de fichier non supporté. Veuillez choisir Word (.docx, .doc) ou texte (.txt).'
+      : 'Unsupported file type. Please choose a Word (.docx, .doc) or text (.txt) file.'
+  );
 }

@@ -26,10 +26,11 @@ import {
   UploadCloud,
   Wrench,
   SquareDashedBottom,
-  BookOpen
+  BookOpen,
+  Check
 } from 'lucide-react';
 import { ToolType, PDFElement, TextElement, ShapeElement } from '../types/pdf';
-import { SupportedLanguage, translations } from '../constants/i18n';
+import { SupportedLanguage, SUPPORTED_LANGUAGES, translations } from '../constants/i18n';
 
 interface ToolbarProps {
   activeTool: ToolType;
@@ -47,6 +48,7 @@ interface ToolbarProps {
   onOpenToolsModal: () => void;
   onOpenBookStudioModal: () => void;
   language?: SupportedLanguage;
+  onLanguageChange?: (lang: SupportedLanguage) => void;
 }
 
 const getFonts = (lang: SupportedLanguage) => [
@@ -73,13 +75,31 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onOpenUploadModal,
   onOpenToolsModal,
   onOpenBookStudioModal,
-  language = 'en'
+  language = 'en',
+  onLanguageChange
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const toolLangRef = useRef<HTMLDivElement | null>(null);
   const [showShapeMenu, setShowShapeMenu] = React.useState(false);
   const [showTextMenu, setShowTextMenu] = React.useState(false);
+  const [showToolLangMenu, setShowToolLangMenu] = React.useState(false);
 
   const t = translations[language] || translations.en;
+
+  // Close menus on outside click
+  React.useEffect(() => {
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (toolLangRef.current && !toolLangRef.current.contains(e.target as Node)) {
+        setShowToolLangMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, []);
 
   const isTextSelected = selectedElement?.type === 'text';
   const textEl = isTextSelected ? (selectedElement as TextElement) : null;
@@ -356,6 +376,49 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <Layers className="w-3.5 h-3.5 text-red-600" />
             <span>{t.templates}</span>
           </button>
+
+          {onLanguageChange && (
+            <div className="relative" ref={toolLangRef}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowToolLangMenu(!showToolLangMenu);
+                }}
+                className="flex items-center gap-1 px-2 py-1 sm:py-1.5 text-xs font-semibold text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors shrink-0 shadow-2xs cursor-pointer"
+                title={t.switchLanguage}
+              >
+                <span>{SUPPORTED_LANGUAGES.find((l) => l.code === language)?.flag || '🌐'}</span>
+                <span className="font-mono uppercase text-[11px] font-bold hidden xs:inline">{language}</span>
+                <ChevronDown className="w-3 h-3 text-neutral-400" />
+              </button>
+
+              {showToolLangMenu && (
+                <div className="absolute top-full mt-1.5 end-0 rtl:start-0 rtl:end-auto w-44 bg-white rounded-xl shadow-2xl border border-neutral-200 py-1.5 z-50 animate-in fade-in zoom-in-95 ring-1 ring-black/10">
+                  <div className="px-3 py-1 text-[10px] font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-100">
+                    {t.switchLanguage}
+                  </div>
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => {
+                        onLanguageChange(l.code);
+                        setShowToolLangMenu(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+                        language === l.code ? 'bg-red-50 text-red-700 font-bold' : 'text-neutral-700 hover:bg-neutral-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{l.flag}</span>
+                        <span>{l.nativeName}</span>
+                      </div>
+                      {language === l.code && <Check className="w-3.5 h-3.5 text-red-600" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

@@ -139,7 +139,7 @@ export const PDFToolsModal: React.FC<PDFToolsModalProps> = ({
                     className="flex items-center gap-1.5 px-4 py-2 bg-white border border-neutral-300 hover:border-red-500 rounded-lg text-xs font-semibold text-neutral-700 hover:text-red-600 transition-colors shadow-xs"
                   >
                     <RotateCw className="w-3.5 h-3.5 text-red-600" />
-                    <span>+90° ({language === 'ar' ? 'يميناً' : 'Clockwise'})</span>
+                    <span>+90° ({language === 'ar' ? 'يميناً' : language === 'es' ? 'Horario' : language === 'fr' ? 'Horaire' : 'Clockwise'})</span>
                   </button>
                   <button
                     onClick={() => {
@@ -149,7 +149,7 @@ export const PDFToolsModal: React.FC<PDFToolsModalProps> = ({
                     className="flex items-center gap-1.5 px-4 py-2 bg-white border border-neutral-300 hover:border-red-500 rounded-lg text-xs font-semibold text-neutral-700 hover:text-red-600 transition-colors shadow-xs"
                   >
                     <RotateCw className="w-3.5 h-3.5 text-blue-600 -scale-x-100" />
-                    <span>-90° ({language === 'ar' ? 'يساراً' : 'Counter-Clockwise'})</span>
+                    <span>-90° ({language === 'ar' ? 'يساراً' : language === 'es' ? 'Antihorario' : language === 'fr' ? 'Antihoraire' : 'Counter-Clockwise'})</span>
                   </button>
                   <button
                     onClick={() => {
@@ -166,7 +166,7 @@ export const PDFToolsModal: React.FC<PDFToolsModalProps> = ({
 
               <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-200">
                 <h4 className="text-xs font-bold text-neutral-800 mb-1">
-                  {t.rotateAllBtn} ({documentData.pages.length} {language === 'ar' ? 'صفحات' : 'pages'})
+                  {t.rotateAllBtn} ({documentData.pages.length} {language === 'ar' ? 'صفحات' : language === 'es' ? 'páginas' : 'pages'})
                 </h4>
                 <div className="flex items-center gap-2 mt-3">
                   <button

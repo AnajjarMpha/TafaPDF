@@ -107,14 +107,14 @@ export const PDFUploadModal: React.FC<PDFUploadModalProps> = ({
         importedDoc = await loadPDFFile(file, (progress) => {
           setStatusText(progress.status);
           setPercent(Math.round((progress.currentPage / progress.totalPages) * 100));
-        });
+        }, language);
       } else {
         // Word or TXT
         setStatusText(t.convertingWord(file.name));
         importedDoc = await loadWordOrTextFile(file, (progress) => {
           setStatusText(progress.status);
           setPercent(progress.percent);
-        });
+        }, language);
       }
 
       await new Promise((r) => setTimeout(r, 400));
