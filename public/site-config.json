@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-09-26T15:50:00.000Z",
+  "adsense": {
+    "enabled": false,
+    "publisherId": "",
+    "autoAdsEnabled": true,
+    "testMode": false,
+    "adSlots": {
+      "topBanner": "",
+      "exportModalBanner": "",
+      "sidebarBanner": ""
+    },
+    "customAdCode": ""
+  },
+  "analytics": {
+    "enabled": false,
+    "measurementId": "",
+    "gtmContainerId": "",
+    "trackDocumentEvents": true
+  },
+  "siteKit": {
+    "googleSiteVerification": "",
+    "bingVerification": "",
+    "yandexVerification": ""
+  },
+  "seo": {
+    "siteTitle": "TafaPDF.com – Professional Book Studio & Advanced PDF Editor",
+    "siteDescription": "Create, format and publish books, edit PDF documents, sign electronically, and export commercial print-ready files with ease.",
+    "siteKeywords": "pdf editor, book studio, create pdf, edit pdf, sign pdf, merge pdf, split pdf, compress pdf, tafapdf, arabic pdf editor",
+    "canonicalDomain": "https://tafapdf.com",
+    "robotsIndex": true,
+    "customRobotsTxt": "# Robots.txt for TafaPDF.com\nUser-agent: *\nAllow: /\nAllow: /sitemap.xml\nDisallow: /admin\nDisallow: /adminapp\nDisallow: /api/\n\nSitemap: https://tafapdf.com/sitemap.xml",
+    "sitemapUrl": "https://tafapdf.com/sitemap.xml"
+  },
+  "customScripts": {
+    "headScripts": "",
+    "bodyScripts": ""
+  },
+  "security": {
+    "adminPin": "",
+    "isPinRequired": false
+  }
+}

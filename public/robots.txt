@@ -8,6 +8,7 @@ Allow: /#book-studio
 Allow: /#tools
 Allow: /#templates
 Disallow: /admin
+Disallow: /adminapp
 Disallow: /api/
 
 # Host specification

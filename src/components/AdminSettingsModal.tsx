@@ -22,30 +22,40 @@ import {
   XCircle,
   Send,
   Eye,
-  SlidersHorizontal
+  SlidersHorizontal,
+  GitBranch,
+  LogOut,
+  UploadCloud,
+  FileCheck
 } from 'lucide-react';
 import { PlatformSiteSettings } from '../types/siteSettings';
-import { SupportedLanguage, translations } from '../constants/i18n';
+import { SupportedLanguage } from '../constants/i18n';
 import {
   runDiagnostics,
   SystemDiagnostics,
   trackPlatformEvent
 } from '../utils/scriptInjector';
-import { DEFAULT_SITE_SETTINGS } from '../utils/siteSettingsStorage';
+import {
+  DEFAULT_SITE_SETTINGS,
+  commitConfigToGitHub,
+  setAdminAuthenticated
+} from '../utils/siteSettingsStorage';
 
 interface AdminSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onLogout?: () => void;
   settings: PlatformSiteSettings;
   onSaveSettings: (newSettings: PlatformSiteSettings) => void;
   language: SupportedLanguage;
 }
 
-type TabType = 'adsense' | 'analytics' | 'seo' | 'scripts' | 'diagnostics';
+type TabType = 'adsense' | 'analytics' | 'seo' | 'scripts' | 'github' | 'diagnostics';
 
 export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   isOpen,
   onClose,
+  onLogout,
   settings,
   onSaveSettings,
   language
@@ -57,6 +67,31 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   const [diagnostics, setDiagnostics] = useState<SystemDiagnostics | null>(null);
   const [isCheckingDiagnostics, setIsCheckingDiagnostics] = useState(false);
   const [testEventSent, setTestEventSent] = useState(false);
+
+  // GitHub Sync states
+  const [ghRepo, setGhRepo] = useState(() => {
+    try {
+      return localStorage.getItem('tafapdf_gh_repo') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [ghBranch, setGhBranch] = useState(() => {
+    try {
+      return localStorage.getItem('tafapdf_gh_branch') || 'main';
+    } catch {
+      return 'main';
+    }
+  });
+  const [ghToken, setGhToken] = useState(() => {
+    try {
+      return sessionStorage.getItem('tafapdf_gh_token') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [isPushingToGitHub, setIsPushingToGitHub] = useState(false);
+  const [ghResult, setGhResult] = useState<{ success: boolean; message: string; commitUrl?: string } | null>(null);
 
   // Sync formData when settings prop changes or modal opens
   useEffect(() => {
@@ -94,6 +129,44 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
     setTimeout(() => {
       setSaveSuccess(false);
     }, 3000);
+  };
+
+  const handleDownloadSiteConfigFile = () => {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(formData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', 'site-config.json');
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handlePushToGitHub = async () => {
+    if (!ghRepo.trim() || !ghToken.trim()) {
+      alert(isAr ? 'يرجى إدخال اسم المستودع ورمز الوصول (Personal Access Token)' : 'Please enter repository and personal access token.');
+      return;
+    }
+
+    try {
+      localStorage.setItem('tafapdf_gh_repo', ghRepo.trim());
+      localStorage.setItem('tafapdf_gh_branch', ghBranch.trim());
+      sessionStorage.setItem('tafapdf_gh_token', ghToken.trim());
+    } catch {
+      // Ignore storage errors
+    }
+
+    setIsPushingToGitHub(true);
+    setGhResult(null);
+
+    const res = await commitConfigToGitHub({
+      repo: ghRepo,
+      token: ghToken,
+      branch: ghBranch || 'main',
+      settings: formData
+    });
+
+    setIsPushingToGitHub(false);
+    setGhResult(res);
   };
 
   const handleExportJSON = () => {
@@ -140,6 +213,15 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
     setTimeout(() => setTestEventSent(false), 3000);
   };
 
+  const handleLogoutClick = () => {
+    setAdminAuthenticated(false);
+    if (onLogout) {
+      onLogout();
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
       <div
@@ -163,18 +245,34 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
               </div>
               <p className="text-xs text-neutral-500">
                 {isAr
-                  ? 'إدارة أكواد Google AdSense، تحليلات Google Analytics، خريطة الموقع sitemap.xml وملف robots.txt'
-                  : 'Manage Google AdSense publisher codes, GA4 tracking, sitemap.xml, robots.txt and custom meta tags'}
+                  ? 'إدارة أكواد Google AdSense، تحليلات Google Analytics، خريطة الموقع sitemap.xml وتكامل GitHub'
+                  : 'Manage Google AdSense, GA4 tracking, sitemap.xml, robots.txt and GitHub sync'}
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200/60 rounded-xl transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-200/60 text-xs font-semibold text-neutral-700">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Anajjar</span>
+            </div>
+
+            <button
+              onClick={handleLogoutClick}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200 cursor-pointer"
+              title={isAr ? 'تسجيل الخروج من لوحة التحكم' : 'Log out from admin console'}
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isAr ? 'خروج' : 'Logout'}</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200/60 rounded-xl transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Tab Bar */}
@@ -214,7 +312,7 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
             }`}
           >
             <Globe className="w-4 h-4 text-emerald-500" />
-            <span>{isAr ? 'السيو وخريطة الموقع (SEO & Sitemap)' : 'SEO & Sitemap'}</span>
+            <span>{isAr ? 'السيو وخريطة الموقع' : 'SEO & Sitemap'}</span>
           </button>
 
           <button
@@ -226,7 +324,19 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
             }`}
           >
             <Code2 className="w-4 h-4 text-purple-500" />
-            <span>{isAr ? 'أكواد مخصصة (Head & Body)' : 'Custom Scripts'}</span>
+            <span>{isAr ? 'أكواد مخصصة' : 'Custom Scripts'}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('github')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'github'
+                ? 'bg-white text-red-600 shadow-xs border border-neutral-200'
+                : 'text-neutral-600 hover:text-neutral-900 hover:bg-white/50'
+            }`}
+          >
+            <GitBranch className="w-4 h-4 text-orange-600" />
+            <span>{isAr ? 'النشر على GitHub (site-config.json)' : 'GitHub Deploy & Sync'}</span>
           </button>
 
           <button
@@ -241,7 +351,7 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
             }`}
           >
             <ShieldCheck className="w-4 h-4 text-indigo-500" />
-            <span>{isAr ? 'فحص الحالة والنسخ الاحتياطي' : 'Diagnostics & Backup'}</span>
+            <span>{isAr ? 'فحص الحالة والنسخ' : 'Diagnostics & Backup'}</span>
           </button>
         </div>
 
@@ -410,35 +520,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                   }
                   className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-neutral-900 text-green-400 focus:ring-2 focus:ring-red-500/20 outline-hidden"
                 />
-                <p className="text-[11px] text-neutral-400 mt-1">
-                  {isAr
-                    ? 'يمكنك لصق كود الوحدة الإعلانية مباشرة كما يقدمه جوجل أدسنس.'
-                    : 'Paste the raw ad unit snippet directly as provided by Google AdSense.'}
-                </p>
-              </div>
-
-              {/* AdSense Help Card */}
-              <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <div className="text-xs text-blue-900 space-y-1">
-                  <p className="font-bold">
-                    {isAr ? 'كيفية ربط حسابك في Google AdSense:' : 'How to connect your Google AdSense account:'}
-                  </p>
-                  <ol className="list-decimal list-inside space-y-0.5 text-blue-800 text-[11px]">
-                    <li>{isAr ? 'سجل في Google AdSense وأضف موقعك tafapdf.com' : 'Sign up at Google AdSense and add your domain tafapdf.com'}</li>
-                    <li>{isAr ? 'انسخ معرف الناشر Publisher ID وضعه في الحقل أعلاه' : 'Copy your Publisher ID (ca-pub-...) into the input above'}</li>
-                    <li>{isAr ? 'احفظ الإعدادات، وسيتم حقن كود التحقق والإعلانات تلقائياً في الصفحة' : 'Click save, and the verification script will be injected instantly into the page'}</li>
-                  </ol>
-                  <a
-                    href="https://www.google.com/adsense"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 hover:underline pt-1"
-                  >
-                    <span>{isAr ? 'فتح لوحة تحكم Google AdSense' : 'Open Google AdSense Dashboard'}</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
               </div>
             </div>
           )}
@@ -490,9 +571,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                     }
                     className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-hidden bg-white"
                   />
-                  <p className="text-[11px] text-neutral-400 mt-1">
-                    {isAr ? 'يبدأ دائماً بـ G- متبوعاً بأرقام وحروف' : 'Format starts with G- followed by letters & numbers'}
-                  </p>
                 </div>
 
                 <div>
@@ -509,15 +587,12 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                         analytics: { ...formData.analytics, gtmContainerId: e.target.value }
                       })
                     }
-                    className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-hidden bg-white"
+                    className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-white"
                   />
-                  <p className="text-[11px] text-neutral-400 mt-1">
-                    {isAr ? 'إذا كنت تستخدم حاوية GTM' : 'If you manage tags via Google Tag Manager'}
-                  </p>
                 </div>
               </div>
 
-              {/* Event Tracking Toggle */}
+              {/* Enhanced Events Toggle */}
               <div className="flex items-center justify-between p-3 border border-neutral-200 rounded-xl bg-neutral-50/50">
                 <div>
                   <span className="text-xs font-bold text-neutral-800">
@@ -525,8 +600,8 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                   </span>
                   <p className="text-[11px] text-neutral-500">
                     {isAr
-                      ? 'إرسال أحداث عند تصدير المستندات، إضافة الصفحات، استخدام أدوات PDF، وتطبيق استوديو الكتب'
-                      : 'Automatically sends custom events on PDF export, page additions, tool clicks, and book studio presets'}
+                      ? 'إرسال أحداث تلقائياً عند تصدير المستندات، إضافة الصفحات، واستخدام الأدوات'
+                      : 'Automatically sends events on PDF export, page additions, and tool clicks'}
                   </p>
                 </div>
                 <input
@@ -542,7 +617,7 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                 />
               </div>
 
-              {/* Google Site Kit / Search Console Verification */}
+              {/* Google Site Kit Verification */}
               <div className="p-4 border border-neutral-200 rounded-xl bg-neutral-50 space-y-3">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
@@ -563,29 +638,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                       setFormData({
                         ...formData,
                         siteKit: { ...formData.siteKit, googleSiteVerification: e.target.value }
-                      })
-                    }
-                    className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-white"
-                  />
-                  <p className="text-[11px] text-neutral-400 mt-1">
-                    {isAr
-                      ? 'ضع الرمز التعريفي أو وسام الميتا الكامل المقدم من Google Search Console'
-                      : 'Paste the verification token or full meta tag provided by Google Search Console'}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
-                    {isAr ? 'كود التحقق من Bing Webmaster Tools (اختياري)' : 'Bing Webmaster Tools Verification (Optional)'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. A3F8745E..."
-                    value={formData.siteKit.bingVerification}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        siteKit: { ...formData.siteKit, bingVerification: e.target.value }
                       })
                     }
                     className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-white"
@@ -616,7 +668,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
           {activeTab === 'seo' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Sitemap.xml Card */}
                 <div className="p-4 border border-neutral-200 rounded-xl bg-neutral-50/70 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -630,11 +681,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                         {isAr ? 'جاهزة ومحدثة' : 'Ready & Live'}
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-500 mb-2">
-                      {isAr
-                        ? 'ملف sitemap.xml متاح في الجذر ويتضمن كافة أقسام المنصة، استوديو الكتب، الأدوات، والقوالب بلغات متعددة.'
-                        : 'XML sitemap ready at root covering all editor routes, book studio, tools and multilingual tags.'}
-                    </p>
                     <div className="p-2 bg-neutral-900 rounded-lg text-[11px] font-mono text-emerald-400 break-all select-all">
                       https://tafapdf.com/sitemap.xml
                     </div>
@@ -660,7 +706,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                   </div>
                 </div>
 
-                {/* Robots.txt Card */}
                 <div className="p-4 border border-neutral-200 rounded-xl bg-neutral-50/70 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -674,11 +719,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                         {isAr ? 'مُهيأ' : 'Configured'}
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-500 mb-2">
-                      {isAr
-                        ? 'يوجه محركات البحث (Googlebot) لفهرسة المنصة وأدواتها ويربطها تلقائياً بخريطة الموقع.'
-                        : 'Instructs search crawlers to index key routes and links directly to the sitemap.'}
-                    </p>
                     <div className="p-2 bg-neutral-900 rounded-lg text-[11px] font-mono text-blue-300 break-all select-all">
                       https://tafapdf.com/robots.txt
                     </div>
@@ -780,33 +820,12 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                     }
                     className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-lg bg-white"
                   />
-                  <div className="flex justify-between text-[11px] text-neutral-400 mt-0.5">
-                    <span>{isAr ? 'الطول الموصى به: 120-160 حرفاً' : 'Recommended length: 120-160 characters'}</span>
-                    <span className="font-mono">{formData.seo.siteDescription.length} chars</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">
-                    {isAr ? 'الكلمات المفتاحية (Meta Keywords)' : 'Meta Keywords'}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.seo.siteKeywords}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        seo: { ...formData.seo, siteKeywords: e.target.value }
-                      })
-                    }
-                    className="w-full px-3 py-2 text-xs border border-neutral-300 rounded-lg bg-white"
-                  />
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: CUSTOM HEAD & BODY SCRIPTS */}
+          {/* TAB 4: CUSTOM SCRIPTS */}
           {activeTab === 'scripts' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="p-3.5 bg-purple-50/70 border border-purple-200 rounded-xl text-xs text-purple-900">
@@ -826,7 +845,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                 </label>
                 <textarea
                   rows={5}
-                  placeholder={`<!-- Example: Facebook Pixel, Google Tag Manager -->\n<script>\n  // Custom tracking code...\n</script>`}
                   value={formData.customScripts.headScripts}
                   onChange={(e) =>
                     setFormData({
@@ -834,7 +852,7 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                       customScripts: { ...formData.customScripts, headScripts: e.target.value }
                     })
                   }
-                  className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-neutral-900 text-purple-300 focus:ring-2 focus:ring-red-500/20 outline-hidden"
+                  className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-neutral-900 text-purple-300 outline-hidden"
                 />
               </div>
 
@@ -844,7 +862,6 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                 </label>
                 <textarea
                   rows={4}
-                  placeholder={`<!-- Example: Chat widget or conversion trackers -->`}
                   value={formData.customScripts.bodyScripts}
                   onChange={(e) =>
                     setFormData({
@@ -852,13 +869,178 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
                       customScripts: { ...formData.customScripts, bodyScripts: e.target.value }
                     })
                   }
-                  className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-neutral-900 text-purple-300 focus:ring-2 focus:ring-red-500/20 outline-hidden"
+                  className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-neutral-900 text-purple-300 outline-hidden"
                 />
               </div>
             </div>
           )}
 
-          {/* TAB 5: DIAGNOSTICS & BACKUP */}
+          {/* TAB 5: GITHUB DEPLOYMENT & SYNC */}
+          {activeTab === 'github' && (
+            <div className="space-y-5 animate-in fade-in">
+              <div className="p-4 bg-orange-50/80 border border-orange-200 rounded-xl">
+                <div className="flex items-center gap-2 text-orange-950 font-bold text-xs mb-1">
+                  <GitBranch className="w-4 h-4 text-orange-600" />
+                  <span>
+                    {isAr ? 'النشر الدائم والتخزين عبر GitHub (public/site-config.json)' : 'Persistent Storage & Deployment via GitHub'}
+                  </span>
+                </div>
+                <p className="text-xs text-orange-900 leading-relaxed">
+                  {isAr
+                    ? 'بما أنك ستقوم بنشر المنصة عبر GitHub، فإن حفظ الإعدادات في ملف public/site-config.json يضمن أن أي زائر في العالم لموقعك سيحصل فوراً على إعلانات Google AdSense وأكواد Google Analytics دون الاعتماد على التخزين المحلي فقط!'
+                    : 'Because you are deploying via GitHub, saving configuration to public/site-config.json guarantees all global visitors automatically load Google AdSense and Analytics tags on your deployed platform!'}
+                </p>
+              </div>
+
+              {/* Option A: One-click Download */}
+              <div className="p-4 border border-neutral-200 rounded-xl bg-neutral-50/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileCheck className="w-4 h-4 text-emerald-600" />
+                    <h4 className="text-xs font-bold text-neutral-800">
+                      {isAr ? 'الخيار 1: تنزيل ملف site-config.json الجاهز' : 'Option 1: Download site-config.json file'}
+                    </h4>
+                  </div>
+                  <span className="text-[11px] text-neutral-500 font-mono">public/site-config.json</span>
+                </div>
+
+                <p className="text-xs text-neutral-600">
+                  {isAr
+                    ? 'قم بتحميل الملف وضعه في مجلد public بمشروعك، ثم ارفعه لمستودع GitHub. سيتم تطبيقه تلقائياً على المنصة المنشورة.'
+                    : 'Download this file and place it inside the "public" folder of your GitHub repository.'}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadSiteConfigFile}
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-orange-400" />
+                  <span>{isAr ? 'تحميل ملف site-config.json الآن' : 'Download site-config.json'}</span>
+                </button>
+              </div>
+
+              {/* Option B: Direct GitHub API Push */}
+              <div className="p-4 border border-neutral-200 rounded-xl bg-neutral-50/60 space-y-4">
+                <div className="flex items-center gap-2">
+                  <UploadCloud className="w-4 h-4 text-blue-600" />
+                  <h4 className="text-xs font-bold text-neutral-800">
+                    {isAr ? 'الخيار 2: التحديث والنشر المباشر على GitHub عبر API' : 'Option 2: Direct Commit & Push to GitHub via API'}
+                  </h4>
+                </div>
+
+                <p className="text-xs text-neutral-600">
+                  {isAr
+                    ? 'يمكنك إجراء Commit وتحديث مباشر لملف public/site-config.json داخل مستودعك على GitHub بنقرة زر دون الحاجة لسطر الأوامر!'
+                    : 'Directly commit and update public/site-config.json inside your GitHub repository without git CLI!'}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
+                      {isAr ? 'اسم المستودع (Repository: owner/repo)' : 'GitHub Repository (owner/repo)'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Anajjar/tafapdf"
+                      value={ghRepo}
+                      onChange={(e) => setGhRepo(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
+                      {isAr ? 'الفرع (Branch)' : 'Git Branch'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="main"
+                      value={ghBranch}
+                      onChange={(e) => setGhBranch(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
+                    {isAr ? 'رمز الوصول الشخصي لـ GitHub (Personal Access Token - PAT)' : 'GitHub Personal Access Token (PAT)'}
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={ghToken}
+                    onChange={(e) => setGhToken(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono border border-neutral-300 rounded-lg bg-white"
+                  />
+                  <p className="text-[11px] text-neutral-400 mt-1">
+                    {isAr
+                      ? 'يمكنك إنشاء رمز من GitHub Settings > Developer Settings > Personal Access Tokens (صلاحية: repo:contents).'
+                      : 'Create a token from GitHub Settings > Developer Settings > Personal Access Tokens (scope: repo).'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={handlePushToGitHub}
+                    disabled={isPushingToGitHub}
+                    className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-xs transition-colors cursor-pointer"
+                  >
+                    <UploadCloud className={`w-4 h-4 ${isPushingToGitHub ? 'animate-bounce' : ''}`} />
+                    <span>
+                      {isPushingToGitHub
+                        ? (isAr ? 'جاري النشر على GitHub...' : 'Pushing to GitHub...')
+                        : (isAr ? 'نشر وتحديث على GitHub الآن' : 'Commit & Push to GitHub')}
+                    </span>
+                  </button>
+
+                  {ghResult && (
+                    <div
+                      className={`text-xs font-bold flex items-center gap-1.5 ${
+                        ghResult.success ? 'text-emerald-700' : 'text-red-700'
+                      }`}
+                    >
+                      {ghResult.success ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                      <span>{ghResult.message}</span>
+                      {ghResult.commitUrl && (
+                        <a
+                          href={ghResult.commitUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline text-blue-600 flex items-center gap-0.5 ms-1"
+                        >
+                          <span>{isAr ? 'عرض الـ Commit' : 'View Commit'}</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Option C: Copy Raw JSON */}
+              <div className="p-4 border border-neutral-200 rounded-xl bg-neutral-900 text-neutral-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-neutral-400">public/site-config.json (Preview)</span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(JSON.stringify(formData, null, 2), 'config-json')}
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-neutral-300 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors cursor-pointer"
+                  >
+                    {copiedKey === 'config-json' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedKey === 'config-json' ? (isAr ? 'تم النسخ!' : 'Copied!') : (isAr ? 'نسخ كود JSON' : 'Copy JSON')}</span>
+                  </button>
+                </div>
+                <pre className="text-[11px] font-mono overflow-x-auto max-h-48 text-emerald-400 p-2 bg-black/40 rounded-lg scrollbar-thin">
+                  {JSON.stringify(formData, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: DIAGNOSTICS & BACKUP */}
           {activeTab === 'diagnostics' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="flex items-center justify-between">

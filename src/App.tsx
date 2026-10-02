@@ -32,11 +32,18 @@ import { PDFUploadModal } from './components/PDFUploadModal';
 import { PDFToolsModal } from './components/PDFToolsModal';
 import { BookStudioModal, PRESET_LOCALIZATIONS } from './components/BookStudioModal';
 import { AdminSettingsModal } from './components/AdminSettingsModal';
+import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdUnit } from './components/AdUnit';
 import { exportDocumentToPDF } from './utils/pdfExport';
 import { SupportedLanguage, SUPPORTED_LANGUAGES, translations } from './constants/i18n';
 import { PlatformSiteSettings } from './types/siteSettings';
-import { loadSiteSettings, saveSiteSettings } from './utils/siteSettingsStorage';
+import {
+  loadSiteSettings,
+  saveSiteSettings,
+  fetchRemoteSiteConfig,
+  isAdminAuthenticated,
+  setAdminAuthenticated
+} from './utils/siteSettingsStorage';
 import { applySiteSettingsToDOM, trackPlatformEvent } from './utils/scriptInjector';
 
 export default function App() {
@@ -108,15 +115,97 @@ export default function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isToolsModalOpen, setIsToolsModalOpen] = useState(false);
   const [isBookStudioModalOpen, setIsBookStudioModalOpen] = useState(false);
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-
-  // Platform Site Settings (AdSense, Analytics, Site Kit & SEO)
+  // Secret Admin Portal (/adminapp) & Site Settings
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false);
   const [siteSettings, setSiteSettings] = useState<PlatformSiteSettings>(loadSiteSettings);
 
   // Apply script and meta tags to DOM on mount and settings change
   useEffect(() => {
     applySiteSettingsToDOM(siteSettings);
   }, [siteSettings]);
+
+  // Fetch remote /site-config.json for persistent deployment via GitHub
+  useEffect(() => {
+    fetchRemoteSiteConfig().then((remoteConfig) => {
+      if (remoteConfig) {
+        setSiteSettings((prev) => {
+          const merged = { ...prev, ...remoteConfig };
+          applySiteSettingsToDOM(merged);
+          return merged;
+        });
+      }
+    });
+  }, []);
+
+  // Listen to secret /adminapp route (Path, Hash, or Query)
+  useEffect(() => {
+    const checkSecretRoute = () => {
+      if (typeof window === 'undefined') return;
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      const isSecretRoute =
+        path.includes('adminapp') ||
+        hash.includes('adminapp') ||
+        search.includes('adminapp');
+
+      if (isSecretRoute) {
+        if (isAdminAuthenticated()) {
+          setIsAdminSettingsOpen(true);
+          setIsAdminLoginOpen(false);
+        } else {
+          setIsAdminLoginOpen(true);
+          setIsAdminSettingsOpen(false);
+        }
+      }
+    };
+
+    checkSecretRoute();
+    window.addEventListener('popstate', checkSecretRoute);
+    window.addEventListener('hashchange', checkSecretRoute);
+    return () => {
+      window.removeEventListener('popstate', checkSecretRoute);
+      window.removeEventListener('hashchange', checkSecretRoute);
+    };
+  }, []);
+
+  // Keyboard shortcut Ctrl+Shift+A or Cmd+Shift+A for secret access
+  useEffect(() => {
+    const handleKeyShortcut = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        if (isAdminAuthenticated()) {
+          setIsAdminSettingsOpen(true);
+        } else {
+          setIsAdminLoginOpen(true);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyShortcut);
+    return () => window.removeEventListener('keydown', handleKeyShortcut);
+  }, []);
+
+  const handleAdminLoginSuccess = useCallback(() => {
+    setIsAdminLoginOpen(false);
+    setIsAdminSettingsOpen(true);
+  }, []);
+
+  const handleCloseAdmin = useCallback(() => {
+    setIsAdminSettingsOpen(false);
+    setIsAdminLoginOpen(false);
+    if (window.location.hash.includes('adminapp')) {
+      window.location.hash = '';
+    }
+    if (window.location.pathname.includes('adminapp')) {
+      window.history.pushState(null, '', '/');
+    }
+  }, []);
+
+  const handleAdminLogout = useCallback(() => {
+    setAdminAuthenticated(false);
+    handleCloseAdmin();
+  }, [handleCloseAdmin]);
 
   const handleSaveSiteSettings = useCallback((newSettings: PlatformSiteSettings) => {
     setSiteSettings(newSettings);
@@ -1239,7 +1328,6 @@ export default function App() {
         onOpenUploadModal={() => setIsUploadModalOpen(true)}
         onOpenToolsModal={() => setIsToolsModalOpen(true)}
         onOpenBookStudioModal={() => setIsBookStudioModalOpen(true)}
-        onOpenAdminModal={() => setIsAdminModalOpen(true)}
         onSaveProject={handleSaveProject}
         onLoadProject={handleLoadProject}
         isFullscreen={isFullscreen}
@@ -1464,10 +1552,19 @@ export default function App() {
         settings={siteSettings}
       />
 
-      {/* Platform Administration, Google AdSense, Analytics & SEO Modal */}
+      {/* Secret Admin Login Gateway (/adminapp) */}
+      <AdminLoginModal
+        isOpen={isAdminLoginOpen}
+        onClose={handleCloseAdmin}
+        onSuccess={handleAdminLoginSuccess}
+        language={language}
+      />
+
+      {/* Platform Administration, Google AdSense, Analytics, GitHub & SEO Modal */}
       <AdminSettingsModal
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
+        isOpen={isAdminSettingsOpen}
+        onClose={handleCloseAdmin}
+        onLogout={handleAdminLogout}
         settings={siteSettings}
         onSaveSettings={handleSaveSiteSettings}
         language={language}
