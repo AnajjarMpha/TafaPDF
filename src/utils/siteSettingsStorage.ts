@@ -51,9 +51,9 @@ export const DEFAULT_SITE_SETTINGS: PlatformSiteSettings = {
     customAdCode: ''
   },
   analytics: {
-    enabled: false,
+    enabled: true,
     measurementId: '',
-    gtmContainerId: '',
+    gtmContainerId: 'GTM-WV35DHZ2',
     trackDocumentEvents: true
   },
   siteKit: {
@@ -65,10 +65,10 @@ export const DEFAULT_SITE_SETTINGS: PlatformSiteSettings = {
     siteTitle: 'TafaPDF.com – Professional Book Studio & Advanced PDF Editor',
     siteDescription: 'Create, format and publish books, edit PDF documents, sign electronically, and export commercial print-ready files with ease.',
     siteKeywords: 'pdf editor, book studio, create pdf, edit pdf, sign pdf, merge pdf, split pdf, compress pdf, tafapdf, arabic pdf editor',
-    canonicalDomain: 'https://tafapdf.com',
+    canonicalDomain: 'https://app.tafapdf.com',
     robotsIndex: true,
-    customRobotsTxt: `# Robots.txt for TafaPDF.com\nUser-agent: *\nAllow: /\nAllow: /sitemap.xml\nDisallow: /admin\nDisallow: /api/\n\nSitemap: https://tafapdf.com/sitemap.xml`,
-    sitemapUrl: 'https://tafapdf.com/sitemap.xml'
+    customRobotsTxt: `# Robots.txt for TafaPDF.com\nUser-agent: *\nAllow: /\nAllow: /sitemap.xml\nDisallow: /admin\nDisallow: /adminapp\nDisallow: /api/\n\nHost: https://app.tafapdf.com\nSitemap: https://app.tafapdf.com/sitemap.xml`,
+    sitemapUrl: 'https://app.tafapdf.com/sitemap.xml'
   },
   customScripts: {
     headScripts: '',

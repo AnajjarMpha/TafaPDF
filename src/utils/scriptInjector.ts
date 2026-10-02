@@ -158,13 +158,19 @@ function applySEOTags(settings: PlatformSiteSettings) {
   }
 
   if (settings.seo.canonicalDomain?.trim()) {
+    const domain = settings.seo.canonicalDomain.trim();
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) {
       canonical = document.createElement('link');
       canonical.setAttribute('rel', 'canonical');
       document.head.appendChild(canonical);
     }
-    canonical.setAttribute('href', settings.seo.canonicalDomain.trim());
+    canonical.setAttribute('href', domain.endsWith('/') ? domain : `${domain}/`);
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute('content', domain.endsWith('/') ? domain : `${domain}/`);
+    }
   }
 
   // Robots meta tag
@@ -278,11 +284,16 @@ export async function runDiagnostics(settings: PlatformSiteSettings): Promise<Sy
     robotsOk = true;
   }
 
+  const gtmScript = isBrowser ? document.querySelector('script[src*="googletagmanager.com"]') : null;
+  const hasDataLayer = isBrowser && Boolean((window as any).dataLayer);
+
   return {
     adsenseActive: settings.adsense.enabled && Boolean(settings.adsense.publisherId?.trim()),
     adsenseScriptLoaded: Boolean(adsenseScript),
-    analyticsActive: settings.analytics.enabled && Boolean(settings.analytics.measurementId?.trim()),
-    analyticsScriptLoaded: Boolean(gaScript),
+    analyticsActive:
+      settings.analytics.enabled &&
+      (Boolean(settings.analytics.measurementId?.trim()) || Boolean(settings.analytics.gtmContainerId?.trim())),
+    analyticsScriptLoaded: Boolean(gaScript) || Boolean(gtmScript) || hasDataLayer,
     siteVerificationFound: Boolean(siteVerify),
     sitemapAccessible: sitemapOk,
     robotsTxtAccessible: robotsOk

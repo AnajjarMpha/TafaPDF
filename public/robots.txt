@@ -1,5 +1,5 @@
 # Robots.txt for TafaPDF (Acrobat & Book Studio Platform)
-# https://tafapdf.com
+# https://app.tafapdf.com
 
 User-agent: *
 Allow: /
@@ -12,7 +12,7 @@ Disallow: /adminapp
 Disallow: /api/
 
 # Host specification
-Host: https://tafapdf.com
+Host: https://app.tafapdf.com
 
 # Sitemap location
-Sitemap: https://tafapdf.com/sitemap.xml
+Sitemap: https://app.tafapdf.com/sitemap.xml
